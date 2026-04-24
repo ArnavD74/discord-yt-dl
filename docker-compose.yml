@@ -1,0 +1,11 @@
+services:
+  bot:
+    build: .
+    container_name: discord-yt-dl
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - ART_DIR=/app/artist_art
+      - DOWNLOAD_DIR=/tmp/ytdl
+    volumes:
+      - ./artist_art:/app/artist_art:ro

@@ -1,0 +1,4 @@
+discord.py>=2.3
+yt-dlp>=2024.0
+mutagen>=1.47
+google-generativeai>=0.8

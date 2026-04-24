@@ -1,0 +1,7 @@
+mp3_inbox/
+artist_art/
+downloads/
+data/
+.git/
+.env
+__pycache__/
