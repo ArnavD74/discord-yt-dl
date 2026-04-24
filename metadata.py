@@ -1,6 +1,6 @@
 import json
+import re
 import asyncio
-import google.generativeai as genai
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2, TPE1, APIC, ID3NoHeaderError
 
@@ -37,12 +37,36 @@ def _parse_gemini_json(raw: str) -> dict:
     return json.loads(raw)
 
 
-async def clean_title(video_title: str, gemini_api_key: str,
-                      known_artists: list[str]) -> tuple[str | None, str]:
-    """Use Gemini to extract artist and clean song title from a video title.
+def _clean_title_regex(video_title: str) -> tuple[str | None, str]:
+    """Extract artist and title using regex. Fallback when Gemini is unavailable."""
+    # Strip common YouTube junk tags
+    cleaned = re.sub(
+        r"\s*[\[\(]?\s*(?:Official\s+(?:Music\s+)?Video|Official\s+Audio|Official\s+Visualizer"
+        r"|Lyrics?\s*(?:Video)?|Lyric\s+Video|Visualizer|Audio|HQ|HD|4K"
+        r"|prod\.?\s*(?:by\s+)?\S+|BEST\s+QUALITY|Unreleased|NEW"
+        r")\s*[\]\)]?\s*",
+        "", video_title, flags=re.IGNORECASE
+    ).strip()
 
-    Returns (artist, title).
-    """
+    # Try "Artist - Title" split
+    match = re.match(r"^(.+?)\s*[-–—]\s+(.+)$", cleaned)
+    if match:
+        artist = match.group(1).strip()
+        title = match.group(2).strip()
+        # Strip featured artists from title
+        title = re.split(r"\s+(?:ft\.?|feat\.?|featuring)\s+", title, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+        print(f"Regex: '{video_title}' -> artist='{artist}', title='{title}'")
+        return artist, title
+
+    print(f"Regex: '{video_title}' -> artist=None, title='{cleaned}'")
+    return None, cleaned or video_title
+
+
+async def clean_title_gemini(video_title: str, gemini_api_key: str,
+                             known_artists: list[str]) -> tuple[str | None, str]:
+    """Use Gemini to extract artist and clean song title from a video title."""
+    import google.generativeai as genai
+
     genai.configure(api_key=gemini_api_key)
     model = genai.GenerativeModel("gemini-3.1-flash-lite-preview")
 
@@ -99,9 +123,12 @@ def tag_mp3(filepath: str, artist: str | None, title: str,
 
 async def clean_title_and_tag(filepath: str, video_title: str,
                               art_manager: ArtManager,
-                              gemini_api_key: str) -> tuple[str | None, str]:
-    """Clean the title via Gemini, then write ID3 tags. Returns (artist, title)."""
-    known_artists = art_manager.list_artists()
-    artist, title = await clean_title(video_title, gemini_api_key, known_artists)
+                              gemini_api_key: str | None) -> tuple[str | None, str]:
+    """Clean the title via Gemini (or regex fallback), then write ID3 tags. Returns (artist, title)."""
+    if gemini_api_key:
+        known_artists = art_manager.list_artists()
+        artist, title = await clean_title_gemini(video_title, gemini_api_key, known_artists)
+    else:
+        artist, title = _clean_title_regex(video_title)
     await asyncio.to_thread(tag_mp3, filepath, artist, title, art_manager)
     return artist, title

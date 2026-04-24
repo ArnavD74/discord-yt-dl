@@ -9,7 +9,7 @@ from art_manager import ArtManager
 
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 ART_DIR = os.environ.get("ART_DIR", "/app/artist_art")
 
 intents = discord.Intents.default()
@@ -36,6 +36,7 @@ async def on_ready():
     artists = art_manager.list_artists()
     print(f"yt-dl bot ready as {client.user}")
     print(f"Listening on channel {CHANNEL_ID}")
+    print(f"Gemini: {'enabled' if GEMINI_API_KEY else 'disabled (no GEMINI_API_KEY, using regex fallback)'}")
     print(f"Artist art loaded: {len(artists)} artists")
     if artists:
         print(f"  Artists: {', '.join(artists)}")

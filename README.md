@@ -1,6 +1,6 @@
 # discord-yt-dl
 
-Discord bot that monitors a channel for YouTube/SoundCloud links, downloads the audio as 320kbps MP3, cleans up the title with Gemini, embeds ID3 tags + artist cover art, and uploads it back to Discord.
+Discord bot that monitors a channel for YouTube/SoundCloud links, downloads the audio as 320kbps MP3, cleans up the title, embeds ID3 tags + artist cover art, and uploads it back to Discord.
 
 ## Setup
 
@@ -8,7 +8,7 @@ Discord bot that monitors a channel for YouTube/SoundCloud links, downloads the 
 - Python 3.12+ (or Docker)
 - ffmpeg
 - A [Discord bot](https://discord.com/developers/applications) with Message Content Intent enabled
-- A [Gemini API key](https://aistudio.google.com/apikey)
+- (Optional) A [Gemini API key](https://aistudio.google.com/apikey) for smarter title parsing
 
 ### Run with Docker (recommended)
 
@@ -30,6 +30,10 @@ python bot.py
 ```
 
 When running outside Docker, the bot uses `./artist_art` and `/tmp/ytdl` by default. Override with env vars `ART_DIR` and `DOWNLOAD_DIR` if needed.
+
+### Gemini (optional)
+
+If `GEMINI_API_KEY` is set, the bot uses Gemini to intelligently parse artist/title from video titles and match against your known artist art. Without it, the bot falls back to regex parsing (splits `"Artist - Title"` patterns, strips common YouTube tags like `[Official Video]`, `(Lyrics)`, etc.). Both modes work fine -- Gemini just handles edge cases better.
 
 ## Artist Cover Art
 
