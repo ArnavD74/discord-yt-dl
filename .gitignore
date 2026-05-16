@@ -1,7 +1,6 @@
 .env
 downloads/
 mp3_inbox/
-artist_art/
 data/
 __pycache__/
 *.pyc
